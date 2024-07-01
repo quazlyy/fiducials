@@ -1,7 +1,7 @@
+#include <math.h>
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include <math.h>
 
 #include "stag/ED/ValidateEdgeSegments.h"
 
@@ -60,58 +60,52 @@
 ///---------------------------------------------------------------------------
 /// Prewitt gradient map computation during segment validation
 ///
-static short *ComputePrewitt3x3(unsigned char *srcImg, int width, int height,
-                                double *H) {
-  short *gradImg = new short[width * height];
-  memset(gradImg, 0, sizeof(short) * width * height);
+static short *ComputePrewitt3x3(unsigned char *srcImg, int width, int height, double *H) {
+    short *gradImg = new short[width * height];
+    memset(gradImg, 0, sizeof(short) * width * height);
 
-  int maxGradValue = MAX_GRAD_VALUE;
-  int *grads = new int[maxGradValue];
-  memset(grads, 0, sizeof(int) * maxGradValue);
+    int maxGradValue = MAX_GRAD_VALUE;
+    int *grads = new int[maxGradValue];
+    memset(grads, 0, sizeof(int) * maxGradValue);
 
-  for (int i = 1; i < height - 1; i++) {
-    for (int j = 1; j < width - 1; j++) {
-      // Prewitt Operator in horizontal and vertical direction
-      // A B C
-      // D x E
-      // F G H
-      // gx = (C-A) + (E-D) + (H-F)
-      // gy = (F-A) + (G-B) + (H-C)
-      //
-      // To make this faster:
-      // com1 = (H-A)
-      // com2 = (C-F)
-      // Then: gx = com1 + com2 + (E-D) = (H-A) + (C-F) + (E-D) = (C-A) + (E-D)
-      // + (H-F)
-      //       gy = com1 - com2 + (G-B) = (H-A) - (C-F) + (G-B) = (F-A) + (G-B)
-      //       + (H-C)
-      //
-      int com1 =
-          srcImg[(i + 1) * width + j + 1] - srcImg[(i - 1) * width + j - 1];
-      int com2 =
-          srcImg[(i - 1) * width + j + 1] - srcImg[(i + 1) * width + j - 1];
+    for (int i = 1; i < height - 1; i++) {
+        for (int j = 1; j < width - 1; j++) {
+            // Prewitt Operator in horizontal and vertical direction
+            // A B C
+            // D x E
+            // F G H
+            // gx = (C-A) + (E-D) + (H-F)
+            // gy = (F-A) + (G-B) + (H-C)
+            //
+            // To make this faster:
+            // com1 = (H-A)
+            // com2 = (C-F)
+            // Then: gx = com1 + com2 + (E-D) = (H-A) + (C-F) + (E-D) = (C-A) + (E-D)
+            // + (H-F)
+            //       gy = com1 - com2 + (G-B) = (H-A) - (C-F) + (G-B) = (F-A) + (G-B)
+            //       + (H-C)
+            //
+            int com1 = srcImg[(i + 1) * width + j + 1] - srcImg[(i - 1) * width + j - 1];
+            int com2 = srcImg[(i - 1) * width + j + 1] - srcImg[(i + 1) * width + j - 1];
 
-      int gx = abs(com1 + com2 +
-                   (srcImg[i * width + j + 1] - srcImg[i * width + j - 1]));
-      int gy = abs(com1 - com2 +
-                   (srcImg[(i + 1) * width + j] - srcImg[(i - 1) * width + j]));
+            int gx = abs(com1 + com2 + (srcImg[i * width + j + 1] - srcImg[i * width + j - 1]));
+            int gy = abs(com1 - com2 + (srcImg[(i + 1) * width + j] - srcImg[(i - 1) * width + j]));
 
-      int g = gx + gy;
+            int g = gx + gy;
 
-      gradImg[i * width + j] = g;
-      grads[g]++;
-    }  // end-for
-  }    // end-for
+            gradImg[i * width + j] = g;
+            grads[g]++;
+        }  // end-for
+    }      // end-for
 
-  // Compute probability function H
-  int size = (width - 2) * (height - 2);
-  //  size -= grads[0];
-  for (int i = maxGradValue - 1; i > 0; i--) grads[i - 1] += grads[i];
-  for (int i = 0; i < maxGradValue; i++)
-    H[i] = (double)grads[i] / ((double)size);
+    // Compute probability function H
+    int size = (width - 2) * (height - 2);
+    //  size -= grads[0];
+    for (int i = maxGradValue - 1; i > 0; i--) grads[i - 1] += grads[i];
+    for (int i = 0; i < maxGradValue; i++) H[i] = (double)grads[i] / ((double)size);
 
-  delete grads;
-  return gradImg;
+    delete grads;
+    return gradImg;
 }  // end-ComputePrewitt3x3
 
 ///---------------------------------------------------------------------------
@@ -120,82 +114,82 @@ static short *ComputePrewitt3x3(unsigned char *srcImg, int width, int height,
 ///
 #define EPSILON 1.0
 static double NFA(int np, double prob, int len) {
-  double nfa = np;
-  for (int i = 0; i < len && nfa > EPSILON; i++) nfa *= prob;
-  //  for (int i=0; i<len; i++) nfa*=prob;
+    double nfa = np;
+    for (int i = 0; i < len && nfa > EPSILON; i++) nfa *= prob;
+    //  for (int i=0; i<len; i++) nfa*=prob;
 
-  return nfa;
+    return nfa;
 }  // end-NFA
 
 ///----------------------------------------------------------------------------------
 /// Resursive validation using half of the pixels as suggested by DMM algorithm
 /// We take pixels at Nyquist distance, i.e., 2 (as suggested by DMM)
 ///
-static void TestSegment(EdgeMap *map, short *gradImg, int i, int index1,
-                        int index2, int np, double *H, double div) {
-  unsigned char *edgeImg = map->edgeImg;
+static void TestSegment(EdgeMap *map, short *gradImg, int i, int index1, int index2, int np,
+                        double *H, double div) {
+    unsigned char *edgeImg = map->edgeImg;
 
 #define MIN_PATH_LEN 10
-  int width = map->width;
+    int width = map->width;
 
-  int chainLen = index2 - index1 + 1;
-  if (chainLen < MIN_PATH_LEN) return;
+    int chainLen = index2 - index1 + 1;
+    if (chainLen < MIN_PATH_LEN) return;
 
-  /// Test from index1 to index2. If OK, then we are done. Otherwise, split into
-  /// two and recursively test the left & right halves
+    /// Test from index1 to index2. If OK, then we are done. Otherwise, split into
+    /// two and recursively test the left & right halves
 
-  // First find the min. gradient along the segment
-  int minGrad = 1 << 30;
-  int minGradIndex;
-  for (int k = index1; k <= index2; k++) {
-    int r = map->segments[i].pixels[k].r;
-    int c = map->segments[i].pixels[k].c;
-    if (gradImg[r * width + c] < minGrad) {
-      minGrad = gradImg[r * width + c];
-      minGradIndex = k;
-    }
-  }  // end-for
-
-  // Compute nfa
-  double nfa = NFA(np, H[minGrad], (int)(chainLen / div));
-
-  if (nfa <= EPSILON) {
+    // First find the min. gradient along the segment
+    int minGrad = 1 << 30;
+    int minGradIndex;
     for (int k = index1; k <= index2; k++) {
-      int r = map->segments[i].pixels[k].r;
-      int c = map->segments[i].pixels[k].c;
-
-      edgeImg[r * width + c] = 255;
+        int r = map->segments[i].pixels[k].r;
+        int c = map->segments[i].pixels[k].c;
+        if (gradImg[r * width + c] < minGrad) {
+            minGrad = gradImg[r * width + c];
+            minGradIndex = k;
+        }
     }  // end-for
 
-    return;
-  }  // end-if
+    // Compute nfa
+    double nfa = NFA(np, H[minGrad], (int)(chainLen / div));
 
-  // Split into two halves. We divide at the point where the gradient is the
-  // minimum
-  int end = minGradIndex - 1;
-  while (end > index1) {
-    int r = map->segments[i].pixels[end].r;
-    int c = map->segments[i].pixels[end].c;
+    if (nfa <= EPSILON) {
+        for (int k = index1; k <= index2; k++) {
+            int r = map->segments[i].pixels[k].r;
+            int c = map->segments[i].pixels[k].c;
 
-    if (gradImg[r * width + c] <= minGrad)
-      end--;
-    else
-      break;
-  }  // end-while
+            edgeImg[r * width + c] = 255;
+        }  // end-for
 
-  int start = minGradIndex + 1;
-  while (start < index2) {
-    int r = map->segments[i].pixels[start].r;
-    int c = map->segments[i].pixels[start].c;
+        return;
+    }  // end-if
 
-    if (gradImg[r * width + c] <= minGrad)
-      start++;
-    else
-      break;
-  }  // end-while
+    // Split into two halves. We divide at the point where the gradient is the
+    // minimum
+    int end = minGradIndex - 1;
+    while (end > index1) {
+        int r = map->segments[i].pixels[end].r;
+        int c = map->segments[i].pixels[end].c;
 
-  TestSegment(map, gradImg, i, index1, end, np, H, div);
-  TestSegment(map, gradImg, i, start, index2, np, H, div);
+        if (gradImg[r * width + c] <= minGrad)
+            end--;
+        else
+            break;
+    }  // end-while
+
+    int start = minGradIndex + 1;
+    while (start < index2) {
+        int r = map->segments[i].pixels[start].r;
+        int c = map->segments[i].pixels[start].c;
+
+        if (gradImg[r * width + c] <= minGrad)
+            start++;
+        else
+            break;
+    }  // end-while
+
+    TestSegment(map, gradImg, i, index1, end, np, H, div);
+    TestSegment(map, gradImg, i, start, index2, np, H, div);
 }  // end-TestSegment
 
 ///----------------------------------------------------------------------------------
@@ -216,19 +210,16 @@ static void TestSegment(EdgeMap *map, short *gradImg, int i, int index1,
 //     /// into two and recursively test the left & right halves
 
 // #if 0
-//   // Find the min. gradient along the segment & also compute the number of pixels at Nyquist distance from each other
-//   chainLen = 1;
-//   int index = index1;
-//   int minGrad = 1<<30;
-//   int minGradIndex;
-//   for (int k=index1; k<=index2; k++){
+//   // Find the min. gradient along the segment & also compute the number of pixels at Nyquist
+//   distance from each other chainLen = 1; int index = index1; int minGrad = 1<<30; int
+//   minGradIndex; for (int k=index1; k<=index2; k++){
 //     int r = map->segments[i].pixels[k].r;
 //     int c = map->segments[i].pixels[k].c;
 //     if (gradImg[r*width+c] < minGrad){minGrad = gradImg[r*width+c]; minGradIndex = k;}
 
 //     // Count the number of pixels at Nyquist distance from each other
 //     int dx = abs(map->segments[i].pixels[index].c - map->segments[i].pixels[k].c);
-//     int dy = abs(map->segments[i].pixels[index].r - map->segments[i].pixels[k].r);    
+//     int dy = abs(map->segments[i].pixels[index].r - map->segments[i].pixels[k].r);
 //     if (dx >= 2 || dy >= 2){
 //       index = k;
 //       chainLen++;
@@ -317,99 +308,97 @@ static void TestSegment(EdgeMap *map, short *gradImg, int i, int index1,
 /// In other words, updates the valid segments' pixel arrays and their lengths
 ///
 void ExtractNewSegments(EdgeMap *map) {
-  unsigned char *edgeImg = map->edgeImg;
-  int width = map->width;
-  EdgeSegment *segments = &map->segments[map->noSegments];
-  int noSegments = 0;
+    unsigned char *edgeImg = map->edgeImg;
+    int width = map->width;
+    EdgeSegment *segments = &map->segments[map->noSegments];
+    int noSegments = 0;
 
-  for (int i = 0; i < map->noSegments; i++) {
-    int start = 0;
-    while (start < map->segments[i].noPixels) {
-      while (start < map->segments[i].noPixels) {
-        int r = map->segments[i].pixels[start].r;
-        int c = map->segments[i].pixels[start].c;
+    for (int i = 0; i < map->noSegments; i++) {
+        int start = 0;
+        while (start < map->segments[i].noPixels) {
+            while (start < map->segments[i].noPixels) {
+                int r = map->segments[i].pixels[start].r;
+                int c = map->segments[i].pixels[start].c;
 
-        if (edgeImg[r * width + c]) break;
-        start++;
-      }  // end-while
+                if (edgeImg[r * width + c]) break;
+                start++;
+            }  // end-while
 
-      int end = start + 1;
-      while (end < map->segments[i].noPixels) {
-        int r = map->segments[i].pixels[end].r;
-        int c = map->segments[i].pixels[end].c;
+            int end = start + 1;
+            while (end < map->segments[i].noPixels) {
+                int r = map->segments[i].pixels[end].r;
+                int c = map->segments[i].pixels[end].c;
 
-        if (edgeImg[r * width + c] == 0) break;
-        end++;
-      }  // end-while
+                if (edgeImg[r * width + c] == 0) break;
+                end++;
+            }  // end-while
 
-      int len = end - start;
-      if (len >= 10) {
-        // A new segment. Accepted only only long enough (whatever that means)
-        segments[noSegments].pixels = &map->segments[i].pixels[start];
-        segments[noSegments].noPixels = len;
-        noSegments++;
-      }  // end-else
+            int len = end - start;
+            if (len >= 10) {
+                // A new segment. Accepted only only long enough (whatever that means)
+                segments[noSegments].pixels = &map->segments[i].pixels[start];
+                segments[noSegments].noPixels = len;
+                noSegments++;
+            }  // end-else
 
-      start = end + 1;
-    }  // end-while
-  }    // end-for
+            start = end + 1;
+        }  // end-while
+    }      // end-for
 
-  // Copy to ed
-  for (int i = 0; i < noSegments; i++) map->segments[i] = segments[i];
-  map->noSegments = noSegments;
+    // Copy to ed
+    for (int i = 0; i < noSegments; i++) map->segments[i] = segments[i];
+    map->noSegments = noSegments;
 }  // end-ExtractNewSegments
 
 ///----------------------------------------------------------------------------------
 /// Validate the edge segments using the Helmholtz principle
 ///
-void ValidateEdgeSegments(EdgeMap *map, unsigned char *srcImg,
-                          double divForTestSegment) {
-  int width = map->width;
-  int height = map->height;
+void ValidateEdgeSegments(EdgeMap *map, unsigned char *srcImg, double divForTestSegment) {
+    int width = map->width;
+    int height = map->height;
 
-  memset(map->edgeImg, 0, width * height);
+    memset(map->edgeImg, 0, width * height);
 
-  int maxGradValue = MAX_GRAD_VALUE;
-  double *H = new double[maxGradValue];
-  memset(H, 0, sizeof(double) * maxGradValue);
+    int maxGradValue = MAX_GRAD_VALUE;
+    double *H = new double[maxGradValue];
+    memset(H, 0, sizeof(double) * maxGradValue);
 
-  //  short *gradImg = ComputeLSD(srcImg, width, height, H);
-  short *gradImg = ComputePrewitt3x3(srcImg, width, height, H);
+    //  short *gradImg = ComputeLSD(srcImg, width, height, H);
+    short *gradImg = ComputePrewitt3x3(srcImg, width, height, H);
 
-  // Compute np: # of segment pieces
+    // Compute np: # of segment pieces
 #if 1
-  // Does this underestimate the number of pieces of edge segments?
-  // What's the correct value?
-  int np = 0;
-  for (int i = 0; i < map->noSegments; i++) {
-    int len = map->segments[i].noPixels;
-    np += (len * (len - 1)) / 2;
-  }  // end-for
+    // Does this underestimate the number of pieces of edge segments?
+    // What's the correct value?
+    int np = 0;
+    for (int i = 0; i < map->noSegments; i++) {
+        int len = map->segments[i].noPixels;
+        np += (len * (len - 1)) / 2;
+    }  // end-for
 
 //  np *= 32;
 #elif 0
-  // This definitely overestimates the number of pieces of edge segments
-  int np = 0;
-  for (int i = 0; i < map->noSegments; i++) {
-    np += map->segments[i].noPixels;
-  }  // end-for
+    // This definitely overestimates the number of pieces of edge segments
+    int np = 0;
+    for (int i = 0; i < map->noSegments; i++) {
+        np += map->segments[i].noPixels;
+    }  // end-for
 
-  np = (np * (np - 1)) / 2;
+    np = (np * (np - 1)) / 2;
 #endif
 
-  // Validate segments
-  for (int i = 0; i < map->noSegments; i++) {
-    TestSegment(map, gradImg, i, 0, map->segments[i].noPixels - 1, np, H,
-                divForTestSegment);
-    //    TestSegment2(map, gradImg, i, 0, map->segments[i].noPixels-1, np, H,
-    //    divForTestSegment);
-  }  // end-for
+    // Validate segments
+    for (int i = 0; i < map->noSegments; i++) {
+        TestSegment(map, gradImg, i, 0, map->segments[i].noPixels - 1, np, H, divForTestSegment);
+        //    TestSegment2(map, gradImg, i, 0, map->segments[i].noPixels-1, np, H,
+        //    divForTestSegment);
+    }  // end-for
 
-  /// Extract the new edge segments after validation
-  ExtractNewSegments(map);
+    /// Extract the new edge segments after validation
+    ExtractNewSegments(map);
 
-  delete H;
-  delete gradImg;
+    delete H;
+    delete gradImg;
 }  // end-ValidateEdgeSegments
 
 ///----------------------------------------------------------------------------------
@@ -435,9 +424,9 @@ void ValidateEdgeSegments(EdgeMap *map, unsigned char *srcImg,
 //   for (int i = 1; i < height - 1; i++) {
 //     for (int j = 1; j < width - 1; j++) {
 // #if 0
-//       int gx = abs((srcImg[i*width+j+1] - srcImg[i*width+j]) + (srcImg[(i+1)*width+j+1] - srcImg[(i+1)*width+j]));
-//       int gy = abs((srcImg[(i+1)*width+j] - srcImg[i*width+j]) + (srcImg[(i+1)*width+j+1] - srcImg[i*width+j+1]));
-//       int g = gx + gy;
+//       int gx = abs((srcImg[i*width+j+1] - srcImg[i*width+j]) + (srcImg[(i+1)*width+j+1] -
+//       srcImg[(i+1)*width+j])); int gy = abs((srcImg[(i+1)*width+j] - srcImg[i*width+j]) +
+//       (srcImg[(i+1)*width+j+1] - srcImg[i*width+j+1])); int g = gx + gy;
 // #elif 1
 //       // Prewitt
 //       // 0 degrees

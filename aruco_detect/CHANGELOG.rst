@@ -40,7 +40,7 @@ Changelog for package aruco_detect
 -------------------
 * Compatibilty with Melodic
    * remove opencv3 dependancy, opencv3 is no longer a package in melodic, so we use cv_bridge
-   * Fix build on OpenCV 3.2 
+   * Fix build on OpenCV 3.2
 * Import empy with full path to avoid pip conflict
 * Use subprocess for cairosvg to avoid lack of python2 support
 * call genMarker with correct arguments with no joblib

@@ -16,7 +16,7 @@ if __name__ == "__main__":
     fid = int(sys.argv[1])
     if argc == 3:
         map_file = sys.argv[2]
-    else: 
+    else:
         map_file = os.environ['HOME'] + "/.ros/slam/map.txt"
 
     dir=os.path.dirname(map_file)

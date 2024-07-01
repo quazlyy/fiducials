@@ -53,8 +53,8 @@
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include <std_srvs/Empty.h>
 #include <fiducial_slam/AddFiducial.h>
+#include <std_srvs/Empty.h>
 
 #include <fiducial_slam/transform_with_variance.h>
 

@@ -4,9 +4,8 @@
 #include "stag/ED/EdgeMap.h"
 
 /// Computes the anchors & links them. Returns the edge map
-EdgeMap *DoDetectEdgesByED(short *gradImg, unsigned char *dirImg, int width,
-                           int height, int GRADIENT_THRESH,
-                           int ANCHOR_THRESH = 0);
+EdgeMap *DoDetectEdgesByED(short *gradImg, unsigned char *dirImg, int width, int height,
+                           int GRADIENT_THRESH, int ANCHOR_THRESH = 0);
 // EdgeMap *DoDetectEdgesByED4Dirs(short *gradImg, unsigned char *dirImg,
 //                                 int width, int height, int GRADIENT_THRESH,
 //                                 int ANCHOR_THRESH = 0);

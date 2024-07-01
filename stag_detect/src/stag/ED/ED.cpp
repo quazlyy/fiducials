@@ -1,25 +1,25 @@
+#include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <limits.h>
 
 // #include <opencv/cv.h>
 // #include <opencv/cxcore.h>
 // #include <opencv/highgui.h>
 
-//#include "EDDLL.h"
+// #include "EDDLL.h"
 
-#include "stag/ED/EDInternals.h"
 #include "stag/ED/ED.h"
-#include "stag/ED/ImageSmooth.h"
+#include "stag/ED/EDInternals.h"
 #include "stag/ED/GradientOperators.h"
+#include "stag/ED/ImageSmooth.h"
 #include "stag/ED/ValidateEdgeSegments.h"
 
 // #include "stag/ED/Utilities.h"
 // #include "Timer.h"
 
 // Burak - won't be needing this
-//#include "ImageVideoLib.h"
+// #include "ImageVideoLib.h"
 
 ///----------------------------------------------------------------------------------------------
 /// Detect edges by the Edge Drawing method (ED)
@@ -141,49 +141,47 @@
 ///----------------------------------------------------------------------------------------------
 /// Detect edges by the Edge Drawing Parameter Free method (EDPF)
 ///
-EdgeMap *DetectEdgesByEDPF(unsigned char *srcImg, int width, int height,
-                           double smoothingSigma) {
-  // Check parameters for sanity
-  if (smoothingSigma < 1.0) smoothingSigma = 1.0;
+EdgeMap *DetectEdgesByEDPF(unsigned char *srcImg, int width, int height, double smoothingSigma) {
+    // Check parameters for sanity
+    if (smoothingSigma < 1.0) smoothingSigma = 1.0;
 
-  // Allocate space for temporary storage
-  unsigned char *smoothImg = new unsigned char[width * height];
-  unsigned char *dirImg = new unsigned char[width * height];
-  short *gradImg = new short[width * height];
+    // Allocate space for temporary storage
+    unsigned char *smoothImg = new unsigned char[width * height];
+    unsigned char *dirImg = new unsigned char[width * height];
+    short *gradImg = new short[width * height];
 
-  /*------------ SMOOTH THE IMAGE BY A GAUSSIAN KERNEL -------------------*/
-  SmoothImage(srcImg, smoothImg, width, height, smoothingSigma);
+    /*------------ SMOOTH THE IMAGE BY A GAUSSIAN KERNEL -------------------*/
+    SmoothImage(srcImg, smoothImg, width, height, smoothingSigma);
 
-  /*------------ COMPUTE GRADIENT & EDGE DIRECTION MAPS -------------------*/
-  int GRADIENT_THRESH = 16;
-  ComputeGradientMapByPrewitt(smoothImg, gradImg, dirImg, width, height,
-                              GRADIENT_THRESH);
+    /*------------ COMPUTE GRADIENT & EDGE DIRECTION MAPS -------------------*/
+    int GRADIENT_THRESH = 16;
+    ComputeGradientMapByPrewitt(smoothImg, gradImg, dirImg, width, height, GRADIENT_THRESH);
 
 #if 0
   DumpGradImage("OutputImages/gradImgBW.pgm", gradImg, width, height, GRADIENT_THRESH);
 #endif
 
-  /*-------- Detect the edges by ED --------------------------*/
-  int ANCHOR_THRESH = 0;
-  EdgeMap *map = DoDetectEdgesByED(gradImg, dirImg, width, height,
-                                   GRADIENT_THRESH, ANCHOR_THRESH);
+    /*-------- Detect the edges by ED --------------------------*/
+    int ANCHOR_THRESH = 0;
+    EdgeMap *map =
+        DoDetectEdgesByED(gradImg, dirImg, width, height, GRADIENT_THRESH, ANCHOR_THRESH);
 
-  /*----------- Validate Edge Segments ---------------------*/
+    /*----------- Validate Edge Segments ---------------------*/
 #if 0
   ValidateEdgeSegments(map, srcImg);
 #elif 1
-  smoothingSigma /= 2.5;
-  SmoothImage(srcImg, smoothImg, width, height, smoothingSigma);
-  ValidateEdgeSegments(map, smoothImg, 2.25);  // with Prewitt
-//  ValidateEdgeSegments2(map, smoothImg, 2);   // with LSD
+    smoothingSigma /= 2.5;
+    SmoothImage(srcImg, smoothImg, width, height, smoothingSigma);
+    ValidateEdgeSegments(map, smoothImg, 2.25);  // with Prewitt
+                                                 //  ValidateEdgeSegments2(map, smoothImg, 2);   // with LSD
 #endif
 
-  // Clean up
-  delete gradImg;
-  delete dirImg;
-  delete smoothImg;
+    // Clean up
+    delete gradImg;
+    delete dirImg;
+    delete smoothImg;
 
-  return map;
+    return map;
 }  // DetectEdgesByEDPF
 
 ///-------------------------------------------------------------------------------
@@ -378,20 +376,20 @@ EdgeMap *DetectEdgesByEDPF(unsigned char *srcImg, int width, int height,
 ///--------------------------------------------------------------------------------------------------------
 /// Given an image, scales its pixels to [0-255]
 static void ScaleImage(unsigned char *srcImg, int width, int height) {
-  unsigned char min = 255;
-  unsigned char max = 0;
+    unsigned char min = 255;
+    unsigned char max = 0;
 
-  for (int i = 0; i < width * height; i++) {
-    if (srcImg[i] < min)
-      min = srcImg[i];
-    else if (srcImg[i] > max)
-      max = srcImg[i];
-  }  // end-for
+    for (int i = 0; i < width * height; i++) {
+        if (srcImg[i] < min)
+            min = srcImg[i];
+        else if (srcImg[i] > max)
+            max = srcImg[i];
+    }  // end-for
 
-  double scale = 255.0 / (max - min);
-  for (int i = 0; i < width * height; i++) {
-    srcImg[i] = (unsigned char)((srcImg[i] - min) * scale);
-  }
+    double scale = 255.0 / (max - min);
+    for (int i = 0; i < width * height; i++) {
+        srcImg[i] = (unsigned char)((srcImg[i] - min) * scale);
+    }
 }  // end-ScaleImage
 
 ///--------------------------------------------------------------------------------------------------------
@@ -916,9 +914,9 @@ static void ScaleImage(unsigned char *srcImg, int width, int height) {
 
 // #if 0
 //   // Validate
-//   memset(gradImg, 0, sizeof(short)*width*height);      
+//   memset(gradImg, 0, sizeof(short)*width*height);
 
-//   for (double smoothingSigma = 1.0; smoothingSigma <= maxSigma; smoothingSigma += 0.25){  
+//   for (double smoothingSigma = 1.0; smoothingSigma <= maxSigma; smoothingSigma += 0.25){
 //     SmoothImage(ch1Img, smoothCh1Img, width, height, smoothingSigma/2.5);
 //     SmoothImage(ch2Img, smoothCh2Img, width, height, smoothingSigma/2.5);
 //     SmoothImage(ch3Img, smoothCh3Img, width, height, smoothingSigma/2.5);
@@ -930,24 +928,24 @@ static void ScaleImage(unsigned char *srcImg, int width, int height) {
 //         int com2 = smoothCh1Img[(i-1)*width+j+1] - smoothCh1Img[(i+1)*width+j-1];
 
 //         int gxCh1 = abs(com1 + com2 + (smoothCh1Img[i*width+j+1] - smoothCh1Img[i*width+j-1]));
-//         int gyCh1 = abs(com1 - com2 + (smoothCh1Img[(i+1)*width+j] - smoothCh1Img[(i-1)*width+j]));
-//         int gradCh1 = gxCh1+gyCh1;
+//         int gyCh1 = abs(com1 - com2 + (smoothCh1Img[(i+1)*width+j] -
+//         smoothCh1Img[(i-1)*width+j])); int gradCh1 = gxCh1+gyCh1;
 
 //         // Prewitt for channel2
 //         com1 = smoothCh2Img[(i+1)*width+j+1] - smoothCh2Img[(i-1)*width+j-1];
 //         com2 = smoothCh2Img[(i-1)*width+j+1] - smoothCh2Img[(i+1)*width+j-1];
 
 //         int gxCh2 = abs(com1 + com2 + (smoothCh2Img[i*width+j+1] - smoothCh2Img[i*width+j-1]));
-//         int gyCh2 = abs(com1 - com2 + (smoothCh2Img[(i+1)*width+j] - smoothCh2Img[(i-1)*width+j]));
-//         int gradCh2 = gxCh2+gyCh2;
+//         int gyCh2 = abs(com1 - com2 + (smoothCh2Img[(i+1)*width+j] -
+//         smoothCh2Img[(i-1)*width+j])); int gradCh2 = gxCh2+gyCh2;
 
 //         // Prewitt for channel3
 //         com1 = smoothCh3Img[(i+1)*width+j+1] - smoothCh3Img[(i-1)*width+j-1];
 //         com2 = smoothCh3Img[(i-1)*width+j+1] - smoothCh3Img[(i+1)*width+j-1];
 
 //         int gxCh3 = abs(com1 + com2 + (smoothCh3Img[i*width+j+1] - smoothCh3Img[i*width+j-1]));
-//         int gyCh3 = abs(com1 - com2 + (smoothCh3Img[(i+1)*width+j] - smoothCh3Img[(i-1)*width+j]));
-//         int gradCh3 = gxCh3+gyCh3;
+//         int gyCh3 = abs(com1 - com2 + (smoothCh3Img[(i+1)*width+j] -
+//         smoothCh3Img[(i-1)*width+j])); int gradCh3 = gxCh3+gyCh3;
 
 //         // Sum
 //         int grad = gradCh1 + gradCh2 + gradCh3;

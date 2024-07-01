@@ -14,7 +14,7 @@ With added support for vision_msgs which are required for full integration.
 
 #### Library HD
 
-You can generate STag markers from any library you prefer. 
+You can generate STag markers from any library you prefer.
 Make sure you set the corresponding `libraryHD` parameter in launch file.
 We performed most of the test with library HD11, which suited our needs.
 

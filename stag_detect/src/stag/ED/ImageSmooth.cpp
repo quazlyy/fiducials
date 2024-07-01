@@ -40,45 +40,42 @@
 /// is the default. If sigma>0.0, then calls cvSmooth(srcImg, smoothedImg,
 /// CV_GAUSSIAN, 0, 0, sigma);
 ///
-void SmoothImage(unsigned char *srcImg, unsigned char *smoothImg, int width,
-                 int height, double sigma) {
+void SmoothImage(unsigned char *srcImg, unsigned char *smoothImg, int width, int height,
+                 double sigma) {
+    cv::Mat srcI(height, width, CV_8UC1, (char *)srcImg);
+    cv::Mat smtI(height, width, CV_8UC1, (char *)smoothImg);
 
-  cv::Mat srcI(height, width, CV_8UC1, (char *)srcImg);
-  cv::Mat smtI(height, width, CV_8UC1, (char *)smoothImg);
+    if (sigma == 1.0)
+        cv::GaussianBlur(srcI, smtI, cv::Size(5, 5), 0, 0);
+    else if (sigma == 1.5)
+        cv::GaussianBlur(srcI, smtI, cv::Size(7, 7), 0, 0);
+    else
+        cv::GaussianBlur(srcI, smtI, cv::Size(0, 0), sigma, sigma);
 
-  if (sigma == 1.0)
-    cv::GaussianBlur(srcI, smtI, cv::Size(5, 5), 0, 0);
-  else if (sigma == 1.5)
-    cv::GaussianBlur(srcI, smtI, cv::Size(7, 7), 0, 0);
-  else
-    cv::GaussianBlur(srcI, smtI, cv::Size(0, 0), sigma, sigma);
-  
+    // IplImage *iplImg1, *iplImg2;
 
+    // if (sigma <= 0) {
+    //   memcpy(smoothImg, srcImg, width * height);
+    //   return;
+    // }  // end-if
 
-  // IplImage *iplImg1, *iplImg2;
+    // iplImg1 = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, 1);
+    // iplImg1->imageData = (char *)srcImg;
+    // iplImg1->widthStep = width;
 
-  // if (sigma <= 0) {
-  //   memcpy(smoothImg, srcImg, width * height);
-  //   return;
-  // }  // end-if
+    // iplImg2 = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, 1);
+    // iplImg2->imageData = (char *)smoothImg;
+    // iplImg2->widthStep = width;
 
-  // iplImg1 = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, 1);
-  // iplImg1->imageData = (char *)srcImg;
-  // iplImg1->widthStep = width;
+    // if (sigma == 1.0)
+    //   cvSmooth(iplImg1, iplImg2, CV_GAUSSIAN, 5, 5);
+    // else if (sigma == 1.5)
+    //   cvSmooth(iplImg1, iplImg2, CV_GAUSSIAN, 7, 7);  // seems to be better?
+    // else
+    //   cvSmooth(iplImg1, iplImg2, CV_GAUSSIAN, 0, 0, sigma);
 
-  // iplImg2 = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, 1);
-  // iplImg2->imageData = (char *)smoothImg;
-  // iplImg2->widthStep = width;
-
-  // if (sigma == 1.0)
-  //   cvSmooth(iplImg1, iplImg2, CV_GAUSSIAN, 5, 5);
-  // else if (sigma == 1.5)
-  //   cvSmooth(iplImg1, iplImg2, CV_GAUSSIAN, 7, 7);  // seems to be better?
-  // else
-  //   cvSmooth(iplImg1, iplImg2, CV_GAUSSIAN, 0, 0, sigma);
-
-  // cvReleaseImageHeader(&iplImg1);
-  // cvReleaseImageHeader(&iplImg2);
+    // cvReleaseImageHeader(&iplImg1);
+    // cvReleaseImageHeader(&iplImg2);
 }  // end-SmoothImage
 
 ///---------------------------------------------------------------------------------------------------------------------------------------
@@ -145,12 +142,16 @@ void SmoothImage(unsigned char *srcImg, unsigned char *smoothImg, int width,
 //   // { 1, 4, 7, 4, 1}
 //   for (int i=2; i<height-2; i++){
 //     for (int j=2; j<width-2; j++){
-//       dst[i*width+j] = 
-//         (src[(i-2)*width+j-2] + 4*src[(i-2)*width+j-1] + 7*src[(i-2)*width+j] + 4*src[(i-2)*width+j+1] + src[(i-2)*width+j+2] +
-//          4*src[(i-1)*width+j-2] + 16*src[(i-1)*width+j-1] + 26*src[(i-1)*width+j] + 16*src[(i-1)*width+j+1] + 4*src[(i-1)*width+j+2] +
-//          7*src[i*width+j-2] + 26*src[i*width+j-1] + 41*src[i*width+j] + 26*src[i*width+j+1] + 7*src[i*width+j+2] +
-//          4*src[(i+1)*width+j-2] + 16*src[(i+1)*width+j-1] + 26*src[(i+1)*width+j] + 16*src[(i+1)*width+j+1] + 4*src[(i+1)*width+j+2] +
-//          src[(i+2)*width+j-2] + 4*src[(i+2)*width+j-1] + 7*src[(i+2)*width+j] + 4*src[(i+2)*width+j+1] + src[(i+2)*width+j+2] + 137)/273;      
+//       dst[i*width+j] =
+//         (src[(i-2)*width+j-2] + 4*src[(i-2)*width+j-1] + 7*src[(i-2)*width+j] +
+//         4*src[(i-2)*width+j+1] + src[(i-2)*width+j+2] +
+//          4*src[(i-1)*width+j-2] + 16*src[(i-1)*width+j-1] + 26*src[(i-1)*width+j] +
+//          16*src[(i-1)*width+j+1] + 4*src[(i-1)*width+j+2] + 7*src[i*width+j-2] +
+//          26*src[i*width+j-1] + 41*src[i*width+j] + 26*src[i*width+j+1] + 7*src[i*width+j+2] +
+//          4*src[(i+1)*width+j-2] + 16*src[(i+1)*width+j-1] + 26*src[(i+1)*width+j] +
+//          16*src[(i+1)*width+j+1] + 4*src[(i+1)*width+j+2] + src[(i+2)*width+j-2] +
+//          4*src[(i+2)*width+j-1] + 7*src[(i+2)*width+j] + 4*src[(i+2)*width+j+1] +
+//          src[(i+2)*width+j+2] + 137)/273;
 //     } //end-for
 //   } //end-for
 

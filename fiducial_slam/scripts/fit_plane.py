@@ -109,4 +109,4 @@ if adjust:
             file.write("%d %f %f %f %f %f %s\n" % (ids[i], xs[i], ys[i], zs[i],
                                                    closest_angle(roll[i], slopex),
                                                    closest_angle(pitch[i], slopey),
-                                                   other[i])) 
+                                                   other[i]))

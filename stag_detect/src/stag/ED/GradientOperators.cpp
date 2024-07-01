@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include "stag/ED/GradientOperators.h"
 // #include "stag/ED/GradientOperatorsCV.h"
@@ -13,7 +13,7 @@
 
 /// How to compute the gradient values
 #define USE_GX_GY_PLUS 1  // compute the gradient by G = Gx+Gy
-//#define USE_GX_GY_SQRT 1  // compute the gradient by G = sqrt(Gx*Gx+Gy*Gy)
+// #define USE_GX_GY_SQRT 1  // compute the gradient by G = sqrt(Gx*Gx+Gy*Gy)
 
 ///---------------------------------------------------------
 /// LSD Operator
@@ -74,65 +74,60 @@
 ///---------------------------------------------------------
 /// Prewitt Operator
 ///
-void ComputeGradientMapByPrewitt(unsigned char *smoothImg, short *gradImg,
-                                 unsigned char *dirImg, int width, int height,
-                                 int GRADIENT_THRESH) {
-  // Initialize gradient image for row = 0, row = height-1, column=0,
-  // column=width-1
-  for (int j = 0; j < width; j++) {
-    gradImg[j] = gradImg[(height - 1) * width + j] = GRADIENT_THRESH - 1;
-  }
-  for (int i = 1; i < height - 1; i++) {
-    gradImg[i * width] = gradImg[(i + 1) * width - 1] = GRADIENT_THRESH - 1;
-  }
+void ComputeGradientMapByPrewitt(unsigned char *smoothImg, short *gradImg, unsigned char *dirImg,
+                                 int width, int height, int GRADIENT_THRESH) {
+    // Initialize gradient image for row = 0, row = height-1, column=0,
+    // column=width-1
+    for (int j = 0; j < width; j++) {
+        gradImg[j] = gradImg[(height - 1) * width + j] = GRADIENT_THRESH - 1;
+    }
+    for (int i = 1; i < height - 1; i++) {
+        gradImg[i * width] = gradImg[(i + 1) * width - 1] = GRADIENT_THRESH - 1;
+    }
 
-  // Compute the gradient image and edge directions for the rest of the pixels
-  for (int i = 1; i < height - 1; i++) {
-    for (int j = 1; j < width - 1; j++) {
-      // Prewitt Operator in horizontal and vertical direction
-      // A B C
-      // D x E
-      // F G H
-      // gx = (C-A) + (E-D) + (H-F)
-      // gy = (F-A) + (G-B) + (H-C)
-      //
-      // To make this faster:
-      // com1 = (H-A)
-      // com2 = (C-F)
-      // Then: gx = com1 + com2 + (E-D) = (H-A) + (C-F) + (E-D) = (C-A) + (E-D)
-      // + (H-F)
-      //       gy = com1 - com2 + (G-B) = (H-A) - (C-F) + (G-B) = (F-A) + (G-B)
-      //       + (H-C)
-      //
-      int com1 = smoothImg[(i + 1) * width + j + 1] -
-                 smoothImg[(i - 1) * width + j - 1];
-      int com2 = smoothImg[(i - 1) * width + j + 1] -
-                 smoothImg[(i + 1) * width + j - 1];
+    // Compute the gradient image and edge directions for the rest of the pixels
+    for (int i = 1; i < height - 1; i++) {
+        for (int j = 1; j < width - 1; j++) {
+            // Prewitt Operator in horizontal and vertical direction
+            // A B C
+            // D x E
+            // F G H
+            // gx = (C-A) + (E-D) + (H-F)
+            // gy = (F-A) + (G-B) + (H-C)
+            //
+            // To make this faster:
+            // com1 = (H-A)
+            // com2 = (C-F)
+            // Then: gx = com1 + com2 + (E-D) = (H-A) + (C-F) + (E-D) = (C-A) + (E-D)
+            // + (H-F)
+            //       gy = com1 - com2 + (G-B) = (H-A) - (C-F) + (G-B) = (F-A) + (G-B)
+            //       + (H-C)
+            //
+            int com1 = smoothImg[(i + 1) * width + j + 1] - smoothImg[(i - 1) * width + j - 1];
+            int com2 = smoothImg[(i - 1) * width + j + 1] - smoothImg[(i + 1) * width + j - 1];
 
-      int gx =
-          abs(com1 + com2 +
-              (smoothImg[i * width + j + 1] - smoothImg[i * width + j - 1]));
-      int gy = abs(
-          com1 - com2 +
-          (smoothImg[(i + 1) * width + j] - smoothImg[(i - 1) * width + j]));
+            int gx =
+                abs(com1 + com2 + (smoothImg[i * width + j + 1] - smoothImg[i * width + j - 1]));
+            int gy = abs(com1 - com2 +
+                         (smoothImg[(i + 1) * width + j] - smoothImg[(i - 1) * width + j]));
 
 #if USE_GX_GY_PLUS
-      int sum = gx + gy;
+            int sum = gx + gy;
 #elif USE_GX_GY_SQRT
-      int sum = sqrtLUT[gx][gy];
+            int sum = sqrtLUT[gx][gy];
 #endif
 
-      int index = i * width + j;
-      gradImg[index] = sum;
+            int index = i * width + j;
+            gradImg[index] = sum;
 
-      if (sum >= GRADIENT_THRESH) {
-        if (gx >= gy)
-          dirImg[index] = EDGE_VERTICAL;
-        else
-          dirImg[index] = EDGE_HORIZONTAL;
-      }  // end-if
-    }    // end-for
-  }      // end-for
+            if (sum >= GRADIENT_THRESH) {
+                if (gx >= gy)
+                    dirImg[index] = EDGE_VERTICAL;
+                else
+                    dirImg[index] = EDGE_HORIZONTAL;
+            }  // end-if
+        }      // end-for
+    }          // end-for
 }  // end-ComputeGradientMapByPrewitt
 
 ///-----------------------------------------------------------------------
