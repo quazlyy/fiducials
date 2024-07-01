@@ -1,0 +1,24 @@
+<launch>
+    <!-- Play Rosbag -->
+    <node name="rosbag" pkg="rosbag" type="play" args="/fp/data/sequences/rnd/2024-06-17/Seq1/vrtk2_9578dc_2024-06-17-12-14-27_maximal_ros-cam.bag"  required="true"/>
+    <!-- <node name="rosbag" pkg="rosbag" type="play" args="/fp/data/sequences/rnd/2024-06-17/Seq2/vrtk2_9578dc_2024-06-17-12-16-38_maximal_ros-cam.bag"  required="true"/> -->
+
+    <!-- ArUco -->
+    <node name="aruco_detect" pkg="aruco_detect" type="aruco_detect" output="screen" args="/camera:=/camera/lowres/image">
+        <param name="dictionary" value="10"/>
+        <param name="frame_id" value="camera_frame"/>
+        <param name="publish_images" value="true"/>
+        <param name="fiducial_len" value=".1"/>
+        <param name="fiducial_len_override" value="2-4:.05"/>
+        <!-- <param name="ignore_fiducials" value="2-100"/> -->
+    </node>
+
+    <!-- Camera Info -->
+    <node name="camera_info" pkg="aruco_detect" type="yaml_to_camera_info_publisher_lowres.py"/>
+
+    <!-- rviz -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find aruco_detect)/cfg/markers.rviz"/>
+
+    <!-- Static TF for viz -->
+    <node name="base_link_to_camera_tf" pkg="tf2_ros" type="static_transform_publisher" args="0 0 1.0 0 0 -1.57 base_link CAM" />
+</launch>
