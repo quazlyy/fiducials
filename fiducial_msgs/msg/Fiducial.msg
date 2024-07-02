@@ -12,3 +12,7 @@
  float64 y2
  float64 x3
  float64 y3
+
+ geometry_msgs/Point32 pt_uv
+
+ geometry_msgs/Point32 pt_hom

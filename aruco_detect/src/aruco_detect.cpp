@@ -202,6 +202,9 @@ private:
     size_t cnt_img_ = 0;
     size_t cnt_pose_ = 0;
 
+    size_t cam_width = 0;
+    size_t cam_height = 0;
+
 public:
     FiducialsNode();
 };
@@ -376,6 +379,8 @@ void FiducialsNode::camInfoCallback(const sensor_msgs::CameraInfo::ConstPtr &msg
 
         haveCamInfo = true;
         frameId = msg->header.frame_id;
+        cam_width = msg->width;
+        cam_height = msg->height;
     } else {
         ROS_WARN("%s", "CameraInfo message has invalid intrinsics, K matrix all zeros");
     }
@@ -425,6 +430,18 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
             fid.y2 = corners[i][2].y;
             fid.x3 = corners[i][3].x;
             fid.y3 = corners[i][3].y;
+
+            fid.pt_uv.x = corners[i][0].x;
+            fid.pt_uv.y = corners[i][0].y;
+            fid.pt_uv.z = 0;
+
+            const cv::Point2d pt_hom =
+                LiftProjective(corners[i][0], cameraMatrix, distortionCoeffs);
+
+            fid.pt_hom.x = pt_hom.x;
+            fid.pt_hom.y = pt_hom.y;
+            fid.pt_hom.y = 1;
+
             fva.fiducials.push_back(fid);
         }
 
@@ -445,7 +462,7 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     double toc_img = t_img.Toc();
     t_img_ += toc_img;
     cnt_img_++;
-    ROS_WARN("ArUco: IMG:  %.2f ms, avg: %.2f", toc_img, t_img_ / cnt_img_);
+    // ROS_WARN("ArUco: IMG:  %.2f ms, avg: %.2f", toc_img, t_img_ / cnt_img_);
 }
 
 void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr &msg) {
@@ -581,7 +598,7 @@ void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr &msg) {
     double toc_pose = t_pose.Toc();
     t_pose_ += toc_pose;
     cnt_pose_++;
-    ROS_WARN("ArUco: pose: %.2f ms, avg: %.2f", toc_pose, t_pose_ / cnt_pose_);
+    // ROS_WARN("ArUco: pose: %.2f ms, avg: %.2f", toc_pose, t_pose_ / cnt_pose_);
 }
 
 void FiducialsNode::handleIgnoreString(const std::string &str) {
