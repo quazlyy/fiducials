@@ -92,22 +92,41 @@ cv::Point2d UndistortPoint(const cv::Point2d &p_distorted, const cv::Mat &distor
     return scaling * p_distorted;
 }
 
-cv::Point2d LiftProjective(const cv::Point2d &p, const cv::Mat &cameraMatrix,
-                           const cv::Mat &distortionMat) {
-    // 1) unproject point to obtain unscaled landmark coordinates (homogeneous
-    // coords)
+cv::Point2d CamToHom(const cv::Point2d &p, const cv::Mat &cameraMatrix) {
     const double cx = cameraMatrix.at<double>(0, 2);
     const double cy = cameraMatrix.at<double>(1, 2);
     const double fx = cameraMatrix.at<double>(0, 0);
     const double fy = cameraMatrix.at<double>(1, 1);
-    const double x_dist_h = (p.x - cx) / fx;
-    const double y_dist_h = (p.y - cy) / fy;
+
+    const double x_h = (p.x - cx) / fx;
+    const double y_h = (p.y - cy) / fy;
+
+    return cv::Point2d(x_h, y_h);
+}
+
+cv::Point2d HomToCam(const cv::Point2d &p_h, const cv::Mat &cameraMatrix) {
+    const double cx = cameraMatrix.at<double>(0, 2);
+    const double cy = cameraMatrix.at<double>(1, 2);
+    const double fx = cameraMatrix.at<double>(0, 0);
+    const double fy = cameraMatrix.at<double>(1, 1);
+
+    const double x = fx * p_h.x + cx;
+    const double y = fy * p_h.y + cy;
+
+    return cv::Point2d(x, y);
+}
+
+cv::Point2d LiftProjective(const cv::Point2d &p, const cv::Mat &cameraMatrix,
+                           const cv::Mat &distortionMat) {
+    // 1) unproject point to obtain unscaled landmark coordinates (homogeneous
+    // coords)
+    const cv::Point2d p_dist_h = CamToHom(p, cameraMatrix);
 
     // 2) do undistortion
-    const cv::Point2d p_undist_h = UndistortPoint(cv::Point2d(x_dist_h, y_dist_h), distortionMat);
+    const cv::Point2d p_undist_h = UndistortPoint(p_dist_h, distortionMat);
 
     // 3) apply camera model to pixel coordinates again
-    return cv::Point2d(fx * p_undist_h.x + cx, fy * p_undist_h.y + cy);
+    return HomToCam(p_undist_h, cameraMatrix);
 }
 
 class TicToc {
@@ -435,12 +454,12 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
             fid.pt_uv.y = corners[i][0].y;
             fid.pt_uv.z = 0;
 
-            const cv::Point2d pt_hom =
-                LiftProjective(corners[i][0], cameraMatrix, distortionCoeffs);
+            const cv::Point2d pt_hom = CamToHom(corners[i][0], cameraMatrix);
+            const cv::Point2d pt_hom_undist = UndistortPoint(pt_hom, distortionCoeffs);
 
-            fid.pt_hom.x = pt_hom.x;
-            fid.pt_hom.y = pt_hom.y;
-            fid.pt_hom.y = 1;
+            fid.pt_hom.x = pt_hom_undist.x;
+            fid.pt_hom.y = pt_hom_undist.y;
+            fid.pt_hom.z = 1;
 
             fva.fiducials.push_back(fid);
         }
