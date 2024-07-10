@@ -428,7 +428,6 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
         int detected_count = (int)ids.size();
         if (verbose || detected_count != prev_detected_count) {
             prev_detected_count = detected_count;
-            ROS_INFO("Detected %d markers", detected_count);
         }
 
         for (size_t i = 0; i < ids.size(); i++) {
