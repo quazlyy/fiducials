@@ -25,14 +25,14 @@ SOFTWARE.
 #pragma once
 
 // ROS includes
-#include "ros/ros.h"
+#include "camera_info_manager/camera_info_manager.h"
 #include "cv_bridge/cv_bridge.h"
 #include "image_transport/image_transport.h"
-#include "camera_info_manager/camera_info_manager.h"
+#include "ros/ros.h"
 
 // ROS msgs
-#include "sensor_msgs/image_encodings.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "sensor_msgs/image_encodings.h"
 #include "vision_msgs/Detection2D.h"
 
 // Stag includes
@@ -41,56 +41,55 @@ SOFTWARE.
 
 namespace stag_ros {
 class StagNode {
- public:
-  StagNode(ros::NodeHandle &nh, image_transport::ImageTransport &imageT);
-  ~StagNode();
+public:
+    StagNode(ros::NodeHandle &nh, image_transport::ImageTransport &imageT);
+    ~StagNode();
 
- private:
-  // Callbacks
-  void imageCallback(const sensor_msgs::ImageConstPtr &msg);
-  void markersArrayCallback(const geometry_msgs::PoseStampedConstPtr &msg);
-  void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
+private:
+    // Callbacks
+    void imageCallback(const sensor_msgs::ImageConstPtr &msg);
+    void markersArrayCallback(const geometry_msgs::PoseStampedConstPtr &msg);
+    void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
 
-  // Functions
-  void loadParameters();
-  // bool getTagIndex(const int id, int &tag_index);
+    // Functions
+    void loadParameters();
+    // bool getTagIndex(const int id, int &tag_index);
 
-  // STag handle
-  Stag *stag;
-  int stag_library;
-  int error_correction;
-  float marker_size;
+    // STag handle
+    Stag *stag;
+    int stag_library;
+    int error_correction;
+    float marker_size;
 
-  // ROS Subcribers
-  image_transport::Subscriber imageSub;
-  ros::Subscriber cameraInfoSub;
-  ros::Subscriber markersSub;
+    // ROS Subcribers
+    image_transport::Subscriber imageSub;
+    ros::Subscriber cameraInfoSub;
+    ros::Subscriber markersSub;
 
-  // ROS Publishers
-  image_transport::Publisher imageDebugPub;
-  ros::Publisher markersPub;
-  ros::Publisher markersArrayPub;
+    // ROS Publishers
+    image_transport::Publisher imageDebugPub;
+    ros::Publisher markersPub;
+    ros::Publisher markersArrayPub;
 
-  // Data
-  cv::Mat cameraMatrix;
-  cv::Mat distortionMat;
-  cv::Mat rectificationMat;
-  cv::Mat projectionMat;
-  bool got_camera_info;
-  bool debug_images;
-  bool publish_tf;
-  bool is_compressed;
-  std::string image_topic;
-  std::string camera_info_topic;
-  std::string markers_topic;
-  std::string markers_array_topic;
-  std::string tag_tf_prefix;
+    // Data
+    cv::Mat cameraMatrix;
+    cv::Mat distortionMat;
+    cv::Mat rectificationMat;
+    cv::Mat projectionMat;
+    bool got_camera_info;
+    bool debug_images;
+    bool publish_tf;
+    bool is_compressed;
+    std::string image_topic;
+    std::string camera_info_topic;
+    std::string markers_topic;
+    std::string markers_array_topic;
+    std::string tag_tf_prefix;
 
-  // Tag and bundle info
-  std::map<std::string, vision_msgs::Detection2D> markersFrames;
-  //std::vector<Bundle> bundles;
-  //std::vector<Tag> tags;
-  
+    // Tag and bundle info
+    std::map<std::string, vision_msgs::Detection2D> markersFrames;
+    // std::vector<Bundle> bundles;
+    // std::vector<Tag> tags;
 };
 
 }  // namespace stag_ros

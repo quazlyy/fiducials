@@ -46,7 +46,6 @@
 
 #include <boost/filesystem.hpp>
 
-
 static double systematic_error = 0.01;
 
 // Constructor for observation
@@ -111,7 +110,8 @@ Map::Map(ros::NodeHandle &nh) : tfBuffer(ros::Duration(30.0)) {
     overridePublishedCovariance = nh.getParam("covariance_diagonal", covarianceDiagonal);
     if (overridePublishedCovariance) {
         if (covarianceDiagonal.size() != 6) {
-            ROS_WARN("ignoring covariance_diagonal because it has %ld elements, not 6", covarianceDiagonal.size());
+            ROS_WARN("ignoring covariance_diagonal because it has %ld elements, not 6",
+                     covarianceDiagonal.size());
             overridePublishedCovariance = false;
         }
         // Check to make sure that the diagonal is non-zero
@@ -360,8 +360,7 @@ int Map::updatePose(std::vector<Observation> &obs, const ros::Time &time,
 
             tf2::Vector3 c = odomTransform.getOrigin();
             ROS_INFO("odom   %lf %lf %lf", c.x(), c.y(), c.z());
-        }
-        else {
+        } else {
             // Don't publish anything if map->odom was requested and is unavailaable
             return numEsts;
         }
@@ -442,8 +441,8 @@ void Map::autoInit(const std::vector<Observation> &obs, const ros::Time &time) {
         int idx = findClosestObs(obs);
 
         if (idx == -1) {
-	     ROS_WARN("Could not find a fiducial to initialize map from");
-	     return;
+            ROS_WARN("Could not find a fiducial to initialize map from");
+            return;
         }
         const Observation &o = obs[idx];
         originFid = o.fid;
@@ -487,14 +486,12 @@ void Map::autoInit(const std::vector<Observation> &obs, const ros::Time &time) {
 // Attempt to add the specified fiducial to the map
 
 void Map::handleAddFiducial(const std::vector<Observation> &obs) {
-
     if (fiducialToAdd == -1) {
         return;
     }
 
     if (fiducials.find(fiducialToAdd) != fiducials.end()) {
-        ROS_INFO("Fiducial %d is already in map - ignoring add request",
-                 fiducialToAdd);
+        ROS_INFO("Fiducial %d is already in map - ignoring add request", fiducialToAdd);
         fiducialToAdd = -1;
         return;
     }
@@ -503,13 +500,11 @@ void Map::handleAddFiducial(const std::vector<Observation> &obs) {
         if (o.fid == fiducialToAdd) {
             ROS_INFO("Adding fiducial_id %d to map", fiducialToAdd);
 
-
             tf2::Stamped<TransformWithVariance> T = o.T_camFid;
 
             // Take into account position of camera on base
             tf2::Transform T_baseCam;
-            if (lookupTransform(baseFrame, o.T_camFid.frame_id_,
-                                o.T_camFid.stamp_, T_baseCam)) {
+            if (lookupTransform(baseFrame, o.T_camFid.frame_id_, o.T_camFid.stamp_, T_baseCam)) {
                 T.setData(T_baseCam * T);
             }
 
@@ -517,8 +512,7 @@ void Map::handleAddFiducial(const std::vector<Observation> &obs) {
             tf2::Transform T_mapBase;
             if (lookupTransform(mapFrame, baseFrame, ros::Time(0), T_mapBase)) {
                 T.setData(T_mapBase * T);
-            }
-            else {
+            } else {
                 ROS_INFO("Placing robot at the origin");
             }
 
@@ -819,10 +813,9 @@ bool Map::clearCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response
 // Service to add a fiducial to the map
 
 bool Map::addFiducialCallback(fiducial_slam::AddFiducial::Request &req,
-                              fiducial_slam::AddFiducial::Response &res)
-{
-   ROS_INFO("Request to add fiducial %d to map", req.fiducial_id);
-   fiducialToAdd = req.fiducial_id;
+                              fiducial_slam::AddFiducial::Response &res) {
+    ROS_INFO("Request to add fiducial %d to map", req.fiducial_id);
+    fiducialToAdd = req.fiducial_id;
 
-   return true;
+    return true;
 }

@@ -4,9 +4,8 @@
 // void ComputeGradientMapByLSD(unsigned char *smoothImg, short *gradImg,
 //                              unsigned char *dirImg, int width, int height,
 //                              int GRADIENT_THRESH);
-void ComputeGradientMapByPrewitt(unsigned char *smoothImg, short *gradImg,
-                                 unsigned char *dirImg, int width, int height,
-                                 int GRADIENT_THRESH);
+void ComputeGradientMapByPrewitt(unsigned char *smoothImg, short *gradImg, unsigned char *dirImg,
+                                 int width, int height, int GRADIENT_THRESH);
 
 // void ComputeGradientMapByPrewitt(unsigned char *smoothImg, short *gradImg,
 //                                  unsigned char *dirImg, int width,

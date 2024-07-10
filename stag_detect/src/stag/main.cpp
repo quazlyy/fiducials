@@ -2,12 +2,12 @@
 #include "stag/Stag.h"
 
 int main() {
-  cv::Mat image = cv::imread("../images/1.jpg", 0);
+    cv::Mat image = cv::imread("../images/1.jpg", 0);
 
-  Stag stag(15, 7, true);
+    Stag stag(15, 7, true);
 
-  stag.detectMarkers(image);
-  stag.logResults("log/");
+    stag.detectMarkers(image);
+    stag.logResults("log/");
 
-  return 1;
+    return 1;
 }

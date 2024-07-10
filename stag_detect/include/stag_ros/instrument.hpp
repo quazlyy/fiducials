@@ -23,52 +23,52 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include <algorithm>
 #include <chrono>
+#include <iostream>
 #include <numeric>
 #include <vector>
-#include <algorithm>
-#include <iostream>
 
-#define INSTRUMENT                                                       \
-  static Instrument instrument(__PRETTY_FUNCTION__, __FILE__, __LINE__); \
-  const Timer timer(instrument);
+#define INSTRUMENT                                                         \
+    static Instrument instrument(__PRETTY_FUNCTION__, __FILE__, __LINE__); \
+    const Timer timer(instrument);
 
 struct Instrument {
-  const char* const fullname;
-  int line;
-  const char* const file;
-  std::vector<size_t> times;
+    const char* const fullname;
+    int line;
+    const char* const file;
+    std::vector<size_t> times;
 
-  Instrument(const char* fullname, const char* file, int line)
-      : fullname(fullname), file(file), line(line) {
-    std::cout << "Beginning instrumenting" << std::endl;
-  }
-  ~Instrument() {
-    std::sort(times.begin(), times.end());
-    size_t count = times.size();
-    size_t sum = std::accumulate(times.begin(), times.end(), 0);
+    Instrument(const char* fullname, const char* file, int line)
+        : fullname(fullname), file(file), line(line) {
+        std::cout << "Beginning instrumenting" << std::endl;
+    }
+    ~Instrument() {
+        std::sort(times.begin(), times.end());
+        size_t count = times.size();
+        size_t sum = std::accumulate(times.begin(), times.end(), 0);
 
-    std::cout << "---------------------------------------" << std::endl;
-    printf("%s in %s:%i\n", fullname, file, line);
-    printf("calls: %lu\n", times.size());
-    printf("min  : %lu\n", times.front());
-    printf("med  : %lu\n", times.at(count / 2));
-    printf("avg  : %lu\n", sum / count);
-    printf("max  : %lu\n", times.back());
-    printf("total: %lu\n", sum);
-    std::cout << "---------------------------------------" << std::endl;
-  }
-  void insert(size_t time) { times.push_back(time); }
+        std::cout << "---------------------------------------" << std::endl;
+        printf("%s in %s:%i\n", fullname, file, line);
+        printf("calls: %lu\n", times.size());
+        printf("min  : %lu\n", times.front());
+        printf("med  : %lu\n", times.at(count / 2));
+        printf("avg  : %lu\n", sum / count);
+        printf("max  : %lu\n", times.back());
+        printf("total: %lu\n", sum);
+        std::cout << "---------------------------------------" << std::endl;
+    }
+    void insert(size_t time) { times.push_back(time); }
 };
 
 struct Timer {
-  Instrument& instrument;
-  std::chrono::time_point<std::chrono::steady_clock> enter;
-  Timer(Instrument& instrument)
-      : enter(std::chrono::steady_clock::now()), instrument(instrument) {}
-  ~Timer() {
-    instrument.insert(std::chrono::duration_cast<std::chrono::microseconds>(
-                          std::chrono::steady_clock::now() - enter)
-                          .count());
-  }
+    Instrument& instrument;
+    std::chrono::time_point<std::chrono::steady_clock> enter;
+    Timer(Instrument& instrument)
+        : enter(std::chrono::steady_clock::now()), instrument(instrument) {}
+    ~Timer() {
+        instrument.insert(std::chrono::duration_cast<std::chrono::microseconds>(
+                              std::chrono::steady_clock::now() - enter)
+                              .count());
+    }
 };

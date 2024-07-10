@@ -23,5 +23,5 @@ jobs:
           required-ros-distributions: noetic
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
-          package-name: fiducials 
+          package-name: fiducials
           target-ros1-distro: noetic

@@ -14,7 +14,7 @@ def checkCmd(cmd, package):
         print("""This utility requires %s. It can be installed by typing:
     sudo apt install %s""" % (cmd, package))
         sys.exit(1)
-     
+
 if __name__ == "__main__":
     checkCmd("pdfunite", "poppler-utils")
     checkCmd("cairosvg", "cairosvg python3-cairosvg")
@@ -58,6 +58,5 @@ if __name__ == "__main__":
     for f in pdfs:
         os.remove(f)
 
-    print('\033[91m' + """After printing, please make sure that the long lines around the marker are 
+    print('\033[91m' + """After printing, please make sure that the long lines around the marker are
 EXACTLY 14.0cm long. This is required for accurate position estimation.""" + '\033[0m')
-

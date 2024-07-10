@@ -19,7 +19,7 @@ for path in sys.path:
          em = em_loader.load_module()
          if "expand" in dir(em):
              break
-# For-else: else is called if loop doesn't break 
+# For-else: else is called if loop doesn't break
 else:
     print("ERROR: could not find module em, please sudo apt install python3-empy")
     exit(2)
@@ -48,14 +48,14 @@ def genSvg(id, dicno, paper_size):
   @{corner_y = (paper_height - fid_len)/2 - cut}
   <line x1="@(corner_x)mm" y1="@(corner_y)mm" x2="@(corner_x + 2)mm" y2="@(corner_y)mm" style="stroke:black"/>
   <line x1="@(corner_x)mm" y1="@(corner_y)mm" x2="@(corner_x)mm" y2="@(corner_y + 2)mm" style="stroke:black"/>
-  
+
   @{corner_x = (paper_width + fid_len)/2 + cut}
   @{corner_y = (paper_height - fid_len)/2 - cut}
   <line x1="@(corner_x)mm" y1="@(corner_y)mm" x2="@(corner_x - 2)mm" y2="@(corner_y)mm" style="stroke:black"/>
   <line x1="@(corner_x)mm" y1="@(corner_y)mm" x2="@(corner_x)mm" y2="@(corner_y + 2)mm" style="stroke:black"/>
 
   <text x="@(paper_width/2)mm" y="@(corner_y - 1)mm" text-anchor="middle" style="font-family:ariel; font-size:8;">
-      This line should be exactly @(fid_len/10)cm long. 
+      This line should be exactly @(fid_len/10)cm long.
   </text>
   <line x1="@(paper_width/2 - fid_len/2)mm" y1="@(corner_y)mm" x2="@(paper_width/2 + fid_len/2)mm" y2="@(corner_y)mm" style="stroke:black"/>
   <line x1="@(corner_x)mm" y1="@(paper_height/2 - fid_len/2)mm" x2="@(corner_x)mm" y2="@(paper_height/2 + fid_len/2)mm" style="stroke:black"/>

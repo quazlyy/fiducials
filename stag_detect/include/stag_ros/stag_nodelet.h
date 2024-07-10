@@ -28,10 +28,10 @@ SOFTWARE.
 #include <nodelet/nodelet.h>
 
 // ROS includes
-#include "ros/ros.h"
+#include "camera_info_manager/camera_info_manager.h"
 #include "cv_bridge/cv_bridge.h"
 #include "image_transport/image_transport.h"
-#include "camera_info_manager/camera_info_manager.h"
+#include "ros/ros.h"
 
 // ROS msgs
 #include "sensor_msgs/image_encodings.h"
@@ -43,55 +43,54 @@ SOFTWARE.
 namespace stag_ros {
 
 class StagNodelet : public nodelet::Nodelet {
- public:
-  StagNodelet() {}
-  virtual ~StagNodelet();
+public:
+    StagNodelet() {}
+    virtual ~StagNodelet();
 
- private:
-  virtual void onInit();
+private:
+    virtual void onInit();
 
-  // Callbacks
-  void imageCallback(const sensor_msgs::ImageConstPtr &msg);
-  void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
+    // Callbacks
+    void imageCallback(const sensor_msgs::ImageConstPtr &msg);
+    void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr &msg);
 
-  // Functions
-  void loadParameters(const ros::NodeHandle &nh);
-  bool getBundleIndex(const int id, int &bundle_index, int &tag_index);
-  bool getTagIndex(const int id, int &tag_index);
+    // Functions
+    void loadParameters(const ros::NodeHandle &nh);
+    bool getBundleIndex(const int id, int &bundle_index, int &tag_index);
+    bool getTagIndex(const int id, int &tag_index);
 
-  // STag handle
-  Stag *stag;
-  int stag_library;
-  int error_correction;
+    // STag handle
+    Stag *stag;
+    int stag_library;
+    int error_correction;
 
-  // ROS Subcribers
-  image_transport::Subscriber imageSub;
-  ros::Subscriber cameraInfoSub;
+    // ROS Subcribers
+    image_transport::Subscriber imageSub;
+    ros::Subscriber cameraInfoSub;
 
-  // ROS Publishers
-  image_transport::Publisher imageDebugPub;
-  ros::Publisher bundlePub;
-  ros::Publisher markersPub;
+    // ROS Publishers
+    image_transport::Publisher imageDebugPub;
+    ros::Publisher bundlePub;
+    ros::Publisher markersPub;
 
-  // Data
-  cv::Mat cameraMatrix;
-  cv::Mat distortionMat;
-  cv::Mat rectificationMat;
-  cv::Mat projectionMat;
-  bool got_camera_info;
-  bool debug_images;
-  bool publish_tf;
-  bool is_compressed;
-  std::string image_topic;
-  std::string camera_info_topic;
-  std::string tag_tf_prefix;
+    // Data
+    cv::Mat cameraMatrix;
+    cv::Mat distortionMat;
+    cv::Mat rectificationMat;
+    cv::Mat projectionMat;
+    bool got_camera_info;
+    bool debug_images;
+    bool publish_tf;
+    bool is_compressed;
+    std::string image_topic;
+    std::string camera_info_topic;
+    std::string tag_tf_prefix;
 
-  // Tag and bundle info
-  std::vector<Bundle> bundles;
-  std::vector<Tag> tags;
+    // Tag and bundle info
+    std::vector<Bundle> bundles;
+    std::vector<Tag> tags;
 };
 
-PLUGINLIB_EXPORT_CLASS(stag_ros::StagNodelet,nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(stag_ros::StagNodelet, nodelet::Nodelet);
 
 }  // namespace stag_ros
-

@@ -5,19 +5,19 @@
 /// Lookup table (LUT) for NFA computation
 ///
 struct NFALUT {
- public:
-  int *LUT;
-  int LUTSize;
+public:
+    int *LUT;
+    int LUTSize;
 
-  double prob;
-  double logNT;
+    double prob;
+    double logNT;
 
- public:
-  /// Constructor
-  NFALUT(int size, double prob, double logNT);
+public:
+    /// Constructor
+    NFALUT(int size, double prob, double logNT);
 
-  // Destructor
-  ~NFALUT() { delete LUT; }  // end-~NFALUT
+    // Destructor
+    ~NFALUT() { delete LUT; }  // end-~NFALUT
 };
 
 ///-------------------------------------------

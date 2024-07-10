@@ -105,7 +105,6 @@ void FiducialSlam::transformCallback(const fiducial_msgs::FiducialTransformArray
 }
 
 FiducialSlam::FiducialSlam(ros::NodeHandle &nh) : fiducialMap(nh) {
-
     // If set, use the fiducial area in pixels^2 as an indication of the
     // 'goodness' of it. This will favor fiducials that are close to the
     // camera and center of the image. The reciprical of the area is actually

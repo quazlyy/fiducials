@@ -10,7 +10,6 @@
 /// is the default. If sigma>1.0, then calls cvSmooth(srcImg, smoothedImg,
 /// CV_GAUSSIAN, 0, 0, sigma);
 ///
-void SmoothImage(IplImage *srcImg, unsigned char *smoothImg,
-                 double sigma = 1.0);
+void SmoothImage(IplImage *srcImg, unsigned char *smoothImg, double sigma = 1.0);
 
 #endif

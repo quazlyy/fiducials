@@ -4,7 +4,7 @@
 -->
 <launch>
   <node type="fiducial_slam" pkg="fiducial_slam" name="fiducial_slam" output="screen">
-    <param name="initial_map_file" 
+    <param name="initial_map_file"
            value="$(find fiducial_slam)/test/111_initial_map.txt" />
     <param name="map_file" value="$(find fiducial_slam)/test/map.txt" />
     <param name="odom_frame" value="" />
@@ -12,14 +12,14 @@
     <param name="do_rotation" value="true" />
   </node>
 
-  <node name="camera_pose" pkg="tf2_ros" type="static_transform_publisher" 
+  <node name="camera_pose" pkg="tf2_ros" type="static_transform_publisher"
         args="0.0 0.0 0.0 0.0 0.0 0.0 1.0 base_link raspicam" />
 
   <node name="rosbag" pkg="rosbag" type="play"
         args="-l $(find fiducial_slam)/test/aruco_transforms.bag">
   </node>
 
-  <test test-name="map_test2" pkg="fiducial_slam" type="map_test.py" 
+  <test test-name="map_test2" pkg="fiducial_slam" type="map_test.py"
     name="map_test">
     <param name="map_file" value="$(find fiducial_slam)/test/map.txt" />
     <param name="min_lines" value="3" />

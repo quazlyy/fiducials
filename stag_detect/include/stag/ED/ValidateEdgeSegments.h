@@ -4,8 +4,7 @@
 #include "stag/ED/EdgeMap.h"
 
 /// Validate the edge segments using the Helmholtz principle
-void ValidateEdgeSegments(EdgeMap *map, unsigned char *srcImg,
-                          double divForTestSegment);
+void ValidateEdgeSegments(EdgeMap *map, unsigned char *srcImg, double divForTestSegment);
 
 /// Using LSD
 // void ValidateEdgeSegments2(EdgeMap *map, unsigned char *srcImg,

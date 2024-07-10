@@ -57,7 +57,7 @@ catkin_install_python(PROGRAMS scripts/create_markers.py
 )
 install(DIRECTORY launch/
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-) 
+)
 
 ###########
 ## Tests ##
@@ -66,8 +66,8 @@ install(DIRECTORY launch/
 if(CATKIN_ENABLE_TESTING)
         find_package(rostest REQUIRED)
 
-        add_rostest_gtest(aruco_images_test 
-          test/aruco_images.test 
+        add_rostest_gtest(aruco_images_test
+          test/aruco_images.test
           test/aruco_images_test.cpp)
         target_link_libraries(aruco_images_test ${catkin_LIBRARIES} ${OpenCV_LIBS})
 endif()

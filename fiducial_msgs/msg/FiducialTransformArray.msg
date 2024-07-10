@@ -2,4 +2,4 @@
  # to an image
  Header header
  int32 image_seq
- FiducialTransform[] transforms 
+ FiducialTransform[] transforms
