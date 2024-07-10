@@ -73,6 +73,85 @@ using namespace cv;
 
 typedef boost::shared_ptr<fiducial_msgs::FiducialArray const> FiducialArrayConstPtr;
 
+cv::Point2d UndistortPoint(const cv::Point2d &p_distorted, const cv::Mat &distortionMat) {
+    const double thetad = std::sqrt(p_distorted.dot(p_distorted));
+    double theta = thetad;
+    for (size_t i = 0; i < 5; ++i) {
+        const double theta2 = theta * theta;
+        const double theta4 = theta2 * theta2;
+        const double theta6 = theta4 * theta2;
+        const double theta8 = theta4 * theta4;
+        theta = thetad /
+                (1.0 + distortionMat.at<double>(0) * theta2 + distortionMat.at<double>(1) * theta4 +
+                 distortionMat.at<double>(2) * theta6 + distortionMat.at<double>(3) * theta8);
+    }
+    const double scaling = std::tan(theta) / thetad;
+    //   ROS_WARN_STREAM("ArUco: Distorted:\n"
+    //                   << p_distorted << "\nUndistorted:\n"
+    //                   << scaling * p_distorted);
+    return scaling * p_distorted;
+}
+
+cv::Point2d CamToHom(const cv::Point2d &p, const cv::Mat &cameraMatrix) {
+    const double cx = cameraMatrix.at<double>(0, 2);
+    const double cy = cameraMatrix.at<double>(1, 2);
+    const double fx = cameraMatrix.at<double>(0, 0);
+    const double fy = cameraMatrix.at<double>(1, 1);
+
+    const double x_h = (p.x - cx) / fx;
+    const double y_h = (p.y - cy) / fy;
+
+    return cv::Point2d(x_h, y_h);
+}
+
+cv::Point2d HomToCam(const cv::Point2d &p_h, const cv::Mat &cameraMatrix) {
+    const double cx = cameraMatrix.at<double>(0, 2);
+    const double cy = cameraMatrix.at<double>(1, 2);
+    const double fx = cameraMatrix.at<double>(0, 0);
+    const double fy = cameraMatrix.at<double>(1, 1);
+
+    const double x = fx * p_h.x + cx;
+    const double y = fy * p_h.y + cy;
+
+    return cv::Point2d(x, y);
+}
+
+cv::Point2d LiftProjective(const cv::Point2d &p, const cv::Mat &cameraMatrix,
+                           const cv::Mat &distortionMat) {
+    // 1) unproject point to obtain unscaled landmark coordinates (homogeneous
+    // coords)
+    const cv::Point2d p_dist_h = CamToHom(p, cameraMatrix);
+
+    // 2) do undistortion
+    const cv::Point2d p_undist_h = UndistortPoint(p_dist_h, distortionMat);
+
+    // 3) apply camera model to pixel coordinates again
+    return HomToCam(p_undist_h, cameraMatrix);
+}
+
+class TicToc {
+public:
+    /**
+     * @brief Constructor
+     */
+    TicToc() : start_{std::chrono::system_clock::now()} {}
+
+    /**
+     * @brief Get elapsed time in milliseconds since creation of timer object
+     *
+     * @returns the milliseconds since instantiation
+     */
+    double Toc() {
+        end_ = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end_ - start_;
+        return elapsed_seconds.count() * 1000;
+    }
+
+private:
+    std::chrono::time_point<std::chrono::system_clock> start_;
+    std::chrono::time_point<std::chrono::system_clock> end_;
+};
+
 class FiducialsNode {
 private:
     ros::Publisher vertices_pub;
@@ -136,6 +215,14 @@ private:
 
     dynamic_reconfigure::Server<aruco_detect::DetectorParamsConfig> configServer;
     dynamic_reconfigure::Server<aruco_detect::DetectorParamsConfig>::CallbackType callbackType;
+
+    double t_img_ = 0;
+    double t_pose_ = 0;
+    size_t cnt_img_ = 0;
+    size_t cnt_pose_ = 0;
+
+    size_t cam_width = 0;
+    size_t cam_height = 0;
 
 public:
     FiducialsNode();
@@ -232,7 +319,14 @@ void FiducialsNode::estimatePoseSingleMarkers(float markerLength, const cv::Mat 
         }
 
         getSingleMarkerObjectPoints(fiducialSize, markerObjPoints);
-        cv::solvePnP(markerObjPoints, corners[i], cameraMatrix, distCoeffs, rvecs[i], tvecs[i]);
+
+        vector<Point2f> corners_undist;
+        for (const auto &corner : corners[i]) {
+            corners_undist.push_back(LiftProjective(corner, cameraMatrix, distortionCoeffs));
+        }
+
+        cv::solvePnP(markerObjPoints, corners_undist, cameraMatrix, cv::Mat::zeros(0, 0, CV_64F),
+                     rvecs[i], tvecs[i]);
 
         reprojectionError[i] = getReprojectionError(markerObjPoints, corners[i], cameraMatrix,
                                                     distCoeffs, rvecs[i], tvecs[i]);
@@ -304,12 +398,15 @@ void FiducialsNode::camInfoCallback(const sensor_msgs::CameraInfo::ConstPtr &msg
 
         haveCamInfo = true;
         frameId = msg->header.frame_id;
+        cam_width = msg->width;
+        cam_height = msg->height;
     } else {
         ROS_WARN("%s", "CameraInfo message has invalid intrinsics, K matrix all zeros");
     }
 }
 
 void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
+    TicToc t_img;
     if (enable_detections == false) {
         return;  // return without doing anything
     }
@@ -331,7 +428,6 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
         int detected_count = (int)ids.size();
         if (verbose || detected_count != prev_detected_count) {
             prev_detected_count = detected_count;
-            ROS_INFO("Detected %d markers", detected_count);
         }
 
         for (size_t i = 0; i < ids.size(); i++) {
@@ -352,6 +448,18 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
             fid.y2 = corners[i][2].y;
             fid.x3 = corners[i][3].x;
             fid.y3 = corners[i][3].y;
+
+            fid.pt_uv.x = corners[i][0].x;
+            fid.pt_uv.y = corners[i][0].y;
+            fid.pt_uv.z = 0;
+
+            const cv::Point2d pt_hom = CamToHom(corners[i][0], cameraMatrix);
+            const cv::Point2d pt_hom_undist = UndistortPoint(pt_hom, distortionCoeffs);
+
+            fid.pt_hom.x = pt_hom_undist.x;
+            fid.pt_hom.y = pt_hom_undist.y;
+            fid.pt_hom.z = 1;
+
             fva.fiducials.push_back(fid);
         }
 
@@ -369,9 +477,14 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     } catch (cv::Exception &e) {
         ROS_ERROR("cv exception: %s", e.what());
     }
+    double toc_img = t_img.Toc();
+    t_img_ += toc_img;
+    cnt_img_++;
+    // ROS_WARN("ArUco: IMG:  %.2f ms, avg: %.2f", toc_img, t_img_ / cnt_img_);
 }
 
 void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr &msg) {
+    TicToc t_pose;
     vector<Vec3d> rvecs, tvecs;
 
     vision_msgs::Detection2DArray vma;
@@ -500,6 +613,10 @@ void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr &msg) {
         pose_pub.publish(vma);
     else
         pose_pub.publish(fta);
+    double toc_pose = t_pose.Toc();
+    t_pose_ += toc_pose;
+    cnt_pose_++;
+    // ROS_WARN("ArUco: pose: %.2f ms, avg: %.2f", toc_pose, t_pose_ / cnt_pose_);
 }
 
 void FiducialsNode::handleIgnoreString(const std::string &str) {

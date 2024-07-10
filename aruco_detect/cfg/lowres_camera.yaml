@@ -1,0 +1,21 @@
+image_width: 640
+image_height: 400
+camera_name: camera # Replace with an appropriate name
+frame_name: CAM
+camera_matrix:
+    rows: 3
+    cols: 3
+    data: [389.75918, 0.0, 312.25114, 0.0, 389.65899, 211.29706, 0.0, 0.0, 1.0]
+distortion_model: equidistant
+distortion_coefficients:
+    rows: 1
+    cols: 4
+    data: [-0.02923418450109211, 0.020424073030467053, -0.05652497675441584, 0.026928565883635968]
+rectification_matrix:
+    rows: 3
+    cols: 3
+    data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+projection_matrix:
+    rows: 3
+    cols: 4
+    data: [389.75918, 0.0, 312.25114, 0.0, 0.0, 389.65899, 211.29706, 0.0, 0.0, 0.0, 1.0, 0.0]
